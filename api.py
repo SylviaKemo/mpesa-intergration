@@ -35,10 +35,13 @@ class PaymentResponse(BaseModel) :
 
 class PaymentDetail(BaseModel):
     id : int
-    amount: int
+    amount: float
     phone_number : str
     status : str
 
+class UpdatePaymentDetails(BaseModel):
+    status : str
+    
 
 # first endpoint
 @app.post("/payment/stk-push")
@@ -73,5 +76,43 @@ def get_payment(payment_id : int) -> PaymentDetail :
 
     
 @app.get("/payments")
-def list_payments () -> list :
-    return list(payments_db.values())
+def list_payments (status: str = None ) -> list :
+     # If no status specified, return all
+  if status is None :
+      return list(payment_db.values())
+
+    # Filter to only payments with matching status
+  filtered = []
+
+  for payment in payments_db.values() :
+      if payment["status"] == status:
+          filtered.append(payment)
+  return filtered
+
+@app.put("/payment/{payment_id}")
+def updated_payment(payment_id : int, request : UpdatePaymentDetails) -> PaymentDetail:
+    if payment_id not in payments_db:
+        raise HTTPException(status_code=404, detail="Payment not found")
+
+    # update the payment
+    payment = payments_db[payment_id]
+    payment["status"] = request.status
+
+    # Return the updated payment
+    return PaymentDetail (
+        id = payment["id"],
+        amount=payment["amount"],
+        phone_number=payment["phone_number"],
+        status=payment["status"]
+    )
+
+@app.delete("/payment/{payment_id}")
+def delete_payment(payment_id : int) :
+    if payment_id not in payments_db:
+        raise HTTPException(status_code=404, detail="Payment not found")
+    
+    del payments_db[payment_id]
+
+    return {"message" : "Payment deleted successfully"}
+
+    
