@@ -25,9 +25,14 @@ def get_mpesa_access_token() -> str:
          }
       )
 
+     print(response)
+
       # Check if successful
      if response.status_code !=  200:
          raise Exception(f"Failed to get access token: {response.text}")
+
+      # Debug: Print full response
+     print(f"Full response: {response.json()}")
 
      # Extract and return token
      token = response.json()["access_token"]
